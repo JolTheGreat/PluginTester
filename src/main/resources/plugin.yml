@@ -1,0 +1,12 @@
+name: PluginTester
+version: '${project.version}'
+main: com.github.jolthegreat.plugintester.PluginTester
+api-version: 1.17
+authors: [ JolTheGreat ]
+description: Test Plugin
+
+commands:
+  gui:
+    description: Opens GUI
+    usage: /<command>
+    aliases: [g]
