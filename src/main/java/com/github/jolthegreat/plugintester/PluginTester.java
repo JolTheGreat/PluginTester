@@ -6,12 +6,15 @@ import java.util.Objects;
 import java.util.logging.Logger;
 
 public final class PluginTester extends JavaPlugin {
+    public static PluginTester INSTANCE;
     public static String test = "hi";
 
     @Override
     public void onEnable() {
         getServer().getPluginManager().registerEvents(new Listener(), this);
         Objects.requireNonNull(this.getCommand("gui")).setExecutor(new CommandExecutor());
+        INSTANCE = this;
+
     }
 
     @Override
