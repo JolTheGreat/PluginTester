@@ -19,7 +19,7 @@ public class CommandExecutor implements org.bukkit.command.CommandExecutor, TabC
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         Player player = (Player) sender;
-        Inventory inventory = Bukkit.createInventory(player, 54, "Test");
+        Inventory inventory = Bukkit.createInventory(player, 9, "Test");
         ItemStack gold = new ItemStack(Material.GOLD_INGOT);
         ItemStack cancel = new ItemStack(Material.BARRIER);
         ItemMeta goldMeta = gold.getItemMeta();

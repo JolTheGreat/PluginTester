@@ -7,7 +7,6 @@ import java.util.logging.Logger;
 
 public final class PluginTester extends JavaPlugin {
     public static PluginTester INSTANCE;
-    public static String test = "hi";
 
     @Override
     public void onEnable() {
