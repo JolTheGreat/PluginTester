@@ -8,7 +8,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.inventory.AnvilInventory;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -18,12 +20,18 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.locks.Condition;
+
+enum SlotType {
+    ONE, TWO, THREE, ALL
+}
 
 interface StopButtonPress {
-    void pressed(int column);
+    void pressed(SlotType type);
 }
 
 public class Listener implements org.bukkit.event.Listener {
+    private static int bet = 0;
 
 
     @EventHandler
@@ -33,9 +41,10 @@ public class Listener implements org.bukkit.event.Listener {
 
     @EventHandler
     public void inventoryClick(InventoryClickEvent event) {
+        ItemStack eventStack = event.getCurrentItem();
         Player player = (Player) event.getWhoClicked();
         if (event.getView().getTitle().equalsIgnoreCase("Test") || event.getView().getTitle().equalsIgnoreCase(ChatColor.GOLD + "Slot Machine")) {
-            switch (Objects.requireNonNull(event.getCurrentItem()).getType()) {
+            switch (Objects.requireNonNull(eventStack).getType()) {
                 case GOLD_INGOT -> {
                     player.closeInventory();
                     final List<ItemStack> possible = CasinoItemContainer.getAll();
@@ -55,6 +64,13 @@ public class Listener implements org.bukkit.event.Listener {
                         for (int i=0; i<possible.size(); i++) {
                             inventory.setItem(possiblePattern[i], possible.get(i));
                         }
+
+                        final ItemStack startButton = new ItemStack(Material.GREEN_STAINED_GLASS_PANE);
+                        final ItemMeta startButtonMeta = startButton.getItemMeta();
+                        assert startButtonMeta != null;
+                        startButtonMeta.setDisplayName(ChatColor.GREEN + "Start");
+                        startButton.setItemMeta(startButtonMeta);
+                        inventory.setItem(24, startButton);
 
 
                         final int[] stopButtonPattern = {46,47,48};
@@ -93,16 +109,17 @@ public class Listener implements org.bukkit.event.Listener {
                         }, 0, 10);
 
 
-                        ButtonPress.addListener((column) -> {
-                            switch (column) {
-                                case 1 -> taskOne.cancel();
-                                case 2 -> taskTwo.cancel();
-                                case 3 -> taskThree.cancel();
-                                default -> {
+                        ButtonPress.addListener((slotType) -> {
+                            switch (slotType) {
+                                case ONE -> taskOne.cancel();
+                                case TWO -> taskTwo.cancel();
+                                case THREE -> taskThree.cancel();
+                                case ALL -> {
                                     taskOne.cancel();
                                     taskTwo.cancel();
                                     taskThree.cancel();
                                 }
+                                default -> System.out.println("Pls select proper stuff");
                             }
                         });
 
@@ -111,14 +128,21 @@ public class Listener implements org.bukkit.event.Listener {
                     }
 
                 }
-                case BARRIER -> player.closeInventory();
+                case BARRIER -> {
+                    Inventory betInventory = Bukkit.createInventory(player, InventoryType.ANVIL, "Pls Enter your bet");
+                    betInventory.setItem(0, new ItemStack(Material.PAPER));
+                    player.openInventory(betInventory);
+                };
 
                 case WARPED_BUTTON -> {
                     final String displayName = Objects.requireNonNull(event.getCurrentItem().getItemMeta()).getDisplayName();
                     if (displayName.contains("Stop slot")) {
                         System.out.println("Stop");
-                        ButtonPress.buttonPressTrigger(Integer.parseInt(displayName.split(" ")[2]));
+                        ButtonPress.buttonPressTrigger(intToSlotType(Integer.parseInt(displayName.split(" ")[2])));
                     }
+                }
+                case GREEN_STAINED_GLASS_PANE -> {
+
                 }
             }
             event.setCancelled(true);
@@ -130,7 +154,25 @@ public class Listener implements org.bukkit.event.Listener {
         System.out.println("inventory close");
         if (event.getView().getTitle().equalsIgnoreCase("Test") || event.getView().getTitle().equalsIgnoreCase(ChatColor.GOLD + "Slot Machine")) {
             System.out.println("Attempting the interrupt");
-            ButtonPress.buttonPressTrigger(-1);
+            ButtonPress.buttonPressTrigger(SlotType.ALL);
+
+        }
+    }
+
+    public SlotType intToSlotType(int i) {
+        switch (i) {
+            case 1 -> {
+                return SlotType.ONE;
+            }
+            case 2 -> {
+                return SlotType.TWO;
+            }
+            case 3 -> {
+                return SlotType.THREE;
+            }
+            default -> {
+                return SlotType.ALL;
+            }
         }
     }
 }
@@ -143,7 +185,7 @@ class ButtonPress {
         listeners.add(press);
     }
 
-    public static void buttonPressTrigger(int column) {
-        listeners.forEach((listener) -> listener.pressed(column));
+    public static void buttonPressTrigger(SlotType slotType) {
+        listeners.forEach((listener) -> listener.pressed(slotType));
     }
 }
