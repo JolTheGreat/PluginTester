@@ -1,15 +1,15 @@
 package com.github.jolthegreat.plugintester.containers;
 
-import com.google.common.collect.Lists;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class CasinoItemContainer {
+public class CasinoContainer {
     private static final ItemStack wood = new ItemStack(Material.BIRCH_WOOD);
     private static final ItemStack netherite = new ItemStack(Material.NETHERITE_INGOT);
     private static final ItemStack apple = new ItemStack(Material.APPLE);
