@@ -20,14 +20,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 enum SlotType {
     ONE, TWO, THREE, ALL
-}
-
-interface StopButtonPress {
-    void pressed(SlotType type);
 }
 
 public class Listener implements org.bukkit.event.Listener {
@@ -186,14 +183,14 @@ public class Listener implements org.bukkit.event.Listener {
 }
 
 class ButtonPress {
-    static List<StopButtonPress> listeners = new ArrayList<>();
+    static List<Consumer<SlotType>> listeners = new ArrayList<>();
 
-    public static void addListener(StopButtonPress press) {
+    public static void addListener(Consumer<SlotType> press) {
         System.out.println(press);
         listeners.add(press);
     }
 
     public static void buttonPressTrigger(SlotType slotType) {
-        listeners.forEach((listener) -> listener.pressed(slotType));
+        listeners.forEach((listener) -> listener.accept(slotType));
     }
 }

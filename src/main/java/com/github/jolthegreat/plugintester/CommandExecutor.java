@@ -12,10 +12,12 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 
 public class CommandExecutor implements org.bukkit.command.CommandExecutor, TabCompleter {
 
+    @Nonnull
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         Player player = (Player) sender;
