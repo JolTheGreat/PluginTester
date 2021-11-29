@@ -69,30 +69,39 @@ public class Listener implements org.bukkit.event.Listener {
                     }
                 }
                 case GREEN_STAINED_GLASS_PANE -> {
-                    if (!lockStart) {
-                        tasks.add(Bukkit.getScheduler().runTaskTimer(PluginTester.INSTANCE, () -> {
-                            ItemStack newSlot = CasinoContainer.getRandom();
-                            inventory.setItem(28, inventory.getItem(19));
-                            inventory.setItem(19, inventory.getItem(10));
-                            inventory.setItem(10, newSlot);
-                            System.out.println("Cycle1");
-                        }, 0, 5));
+                    tasks.add(Bukkit.getScheduler().runTaskTimer(PluginTester.INSTANCE, () -> {
+                        ItemStack newSlot = CasinoContainer.getRandom();
+                        inventory.setItem(28, inventory.getItem(19));
+                        inventory.setItem(19, inventory.getItem(10));
+                        inventory.setItem(10, newSlot);
+                        System.out.println("Cycle1");
+                    }, 0, 5));
 
-                        tasks.add(Bukkit.getScheduler().runTaskTimer(PluginTester.INSTANCE, () -> {
-                            ItemStack newSlot = CasinoContainer.getRandom();
-                            inventory.setItem(29, inventory.getItem(20));
-                            inventory.setItem(20, inventory.getItem(11));
-                            inventory.setItem(11, newSlot);
-                            System.out.println("Cycle2");
-                        }, 0, 5));
-                        tasks.add(Bukkit.getScheduler().runTaskTimer(PluginTester.INSTANCE, () -> {
-                            ItemStack newSlot = CasinoContainer.getRandom();
-                            inventory.setItem(30, inventory.getItem(21));
-                            inventory.setItem(21, inventory.getItem(12));
-                            inventory.setItem(12, newSlot);
-                            System.out.println("Cycle3");
-                        }, 0, 5));
-                    }
+                    tasks.add(Bukkit.getScheduler().runTaskTimer(PluginTester.INSTANCE, () -> {
+                        ItemStack newSlot = CasinoContainer.getRandom();
+                        inventory.setItem(29, inventory.getItem(20));
+                        inventory.setItem(20, inventory.getItem(11));
+                        inventory.setItem(11, newSlot);
+                        System.out.println("Cycle2");
+                    }, 0, 5));
+                    tasks.add(Bukkit.getScheduler().runTaskTimer(PluginTester.INSTANCE, () -> {
+                        ItemStack newSlot = CasinoContainer.getRandom();
+                        inventory.setItem(30, inventory.getItem(21));
+                        inventory.setItem(21, inventory.getItem(12));
+                        inventory.setItem(12, newSlot);
+                        System.out.println("Cycle3");
+                    }, 0, 5));
+
+                    final ItemStack stopAllButton = new ItemStack(Material.RED_STAINED_GLASS_PANE);
+                    final ItemMeta stopAllButtonMeta = stopAllButton.getItemMeta();
+                    assert stopAllButtonMeta != null;
+                    stopAllButtonMeta.setDisplayName(ChatColor.RED + "Stop");
+                    stopAllButton.setItemMeta(stopAllButtonMeta);
+                    inventory.setItem(24, stopAllButton);
+                }
+                case RED_STAINED_GLASS_PANE -> {
+                    tasks.forEach(BukkitTask::cancel);
+                    listeners.slotFinishTrigger();
                 }
             }
             event.setCancelled(true);
@@ -129,6 +138,8 @@ public class Listener implements org.bukkit.event.Listener {
                     startButtonMeta.setDisplayName(ChatColor.GREEN + "Start");
                     startButton.setItemMeta(startButtonMeta);
                     inventory.setItem(24, startButton);
+
+
 
                     final int[] stopButtonPattern = {46, 47, 48};
 
