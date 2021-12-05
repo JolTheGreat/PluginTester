@@ -5,6 +5,8 @@ import net.wesjd.anvilgui.AnvilGUI;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.configuration.Configuration;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -15,9 +17,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
@@ -45,7 +46,6 @@ public class Listener implements org.bukkit.event.Listener {
     @EventHandler
     public void inventoryClick(InventoryClickEvent event) {
         ItemStack eventStack = event.getCurrentItem();
-
         Player player = (Player) event.getWhoClicked();
         if (event.getView().getTitle().equalsIgnoreCase("Test") || event.getView().getTitle().equalsIgnoreCase(ChatColor.GOLD + "Slot Machine")) {
             switch (Objects.requireNonNull(eventStack).getType()) {
@@ -75,7 +75,7 @@ public class Listener implements org.bukkit.event.Listener {
                         inventory.setItem(19, inventory.getItem(10));
                         inventory.setItem(10, newSlot);
                         System.out.println("Cycle1");
-                    }, 0, 5));
+                    }, 0, 2));
 
                     tasks.add(Bukkit.getScheduler().runTaskTimer(PluginTester.INSTANCE, () -> {
                         ItemStack newSlot = CasinoContainer.getRandom();
@@ -83,14 +83,14 @@ public class Listener implements org.bukkit.event.Listener {
                         inventory.setItem(20, inventory.getItem(11));
                         inventory.setItem(11, newSlot);
                         System.out.println("Cycle2");
-                    }, 0, 5));
+                    }, 0, 2));
                     tasks.add(Bukkit.getScheduler().runTaskTimer(PluginTester.INSTANCE, () -> {
                         ItemStack newSlot = CasinoContainer.getRandom();
                         inventory.setItem(30, inventory.getItem(21));
                         inventory.setItem(21, inventory.getItem(12));
                         inventory.setItem(12, newSlot);
                         System.out.println("Cycle3");
-                    }, 0, 5));
+                    }, 0, 2));
 
                     final ItemStack stopAllButton = new ItemStack(Material.RED_STAINED_GLASS_PANE);
                     final ItemMeta stopAllButtonMeta = stopAllButton.getItemMeta();
@@ -101,7 +101,8 @@ public class Listener implements org.bukkit.event.Listener {
                 }
                 case RED_STAINED_GLASS_PANE -> {
                     tasks.forEach(BukkitTask::cancel);
-                    listeners.slotFinishTrigger();
+                    listeners.slotFinishTrigger(SlotListeners.StopMethod.ALL);
+                    inventory.remove(Material.RED_STAINED_GLASS_PANE);
                 }
             }
             event.setCancelled(true);
@@ -113,8 +114,8 @@ public class Listener implements org.bukkit.event.Listener {
             listeners.clearButtonPressListeners();
             listeners.clearSlotFinishListeners();
             tasks.clear();
-            Pattern pattern = Pattern.compile("-?\\d+(\\.\\d+)?");
-            if (pattern.matcher(s).matches()) {
+            Pattern input = Pattern.compile("-?\\d+(\\.\\d+)?");
+            if (input.matcher(s).matches()) {
                 final int bet = Integer.parseInt(s);
                 final List<ItemStack> possible = CasinoContainer.getAll();
                 if (possible.size() == 9) {
@@ -140,7 +141,6 @@ public class Listener implements org.bukkit.event.Listener {
                     inventory.setItem(24, startButton);
 
 
-
                     final int[] stopButtonPattern = {46, 47, 48};
 
                     for (int j : stopButtonPattern) {
@@ -153,12 +153,13 @@ public class Listener implements org.bukkit.event.Listener {
                     }
                     player.openInventory(inventory);
 
-                    listeners.addSlotFinishListener(() -> {
+                    listeners.addSlotFinishListener((stopMethod) -> {
                         System.out.println("All stopped");
                         lockStart = true;
+                        //10,11,12
+                        List<Material> pattern = getPattern();
+
                     });
-
-
 
                     listeners.addButtonPressListener((slotType) -> {
                         tasks.forEach((bukkitTask) -> {
@@ -184,7 +185,7 @@ public class Listener implements org.bukkit.event.Listener {
 
                         if (tasks.get(0).isCancelled() && tasks.get(1).isCancelled() && tasks.get(2).isCancelled()) {
                             System.out.println("Triggering slot finish");
-                            listeners.slotFinishTrigger();
+                            listeners.slotFinishTrigger(SlotListeners.StopMethod.INDIVIDUAL);
                         }
 
                     });
@@ -216,34 +217,95 @@ public class Listener implements org.bukkit.event.Listener {
 
         }
     }
-}
 
-class SlotListeners {
-    private final List<Consumer<SlotType>> buttonPressListeners = new ArrayList<>();
-    private final List<Runnable> slotFinishListeners = new ArrayList<>();
-
-    public void addButtonPressListener(Consumer<SlotType> press) {
-        buttonPressListeners.add(press);
+    public static List<Material> getPattern() {
+        return Arrays.asList(Objects.requireNonNull(inventory.getItem(10)).getType(),
+                Objects.requireNonNull(inventory.getItem(11)).getType(),
+                Objects.requireNonNull(inventory.getItem(12)).getType(),
+                Objects.requireNonNull(inventory.getItem(19)).getType(),
+                Objects.requireNonNull(inventory.getItem(20)).getType(),
+                Objects.requireNonNull(inventory.getItem(21)).getType(),
+                Objects.requireNonNull(inventory.getItem(22)).getType(),
+                Objects.requireNonNull(inventory.getItem(28)).getType(),
+                Objects.requireNonNull(inventory.getItem(29)).getType(),
+                Objects.requireNonNull(inventory.getItem(30)).getType()
+        );
     }
 
-    public void buttonPressTrigger(SlotType slotType) {
-        buttonPressListeners.forEach((listener) -> listener.accept(slotType));
+    public static double getWinMoney(List<Material> pattern, SlotListeners.StopMethod method, int bet) {
+        double winMoney = bet;
+        final FileConfiguration configuration = PluginTester.INSTANCE.getConfig();
+        if ((pattern.get(0) == pattern.get(4) && pattern.get(0) == pattern.get(8)) || (pattern.get(2) == pattern.get(4) && pattern.get(2) == pattern.get(6))) {
+            switch (pattern.get(4)) {
+                case BIRCH_WOOD -> winMoney = bet * configuration.getInt("casino.diagonal.birchWood");
+                case APPLE -> winMoney = bet * configuration.getInt("casino.diagonal.apple");
+                case BREAD -> winMoney = bet * configuration.getInt("casino.diagonal.bread");
+                case IRON_INGOT -> winMoney = bet * configuration.getInt("casino.diagonal.iron");
+                case GOLD_INGOT -> winMoney = bet * configuration.getInt("casino.diagonal.gold");
+                case DIAMOND -> winMoney = bet * configuration.getInt("casino.diagonal.diamond");
+                case NETHERITE_INGOT -> winMoney = bet * configuration.getInt("casino.diagonal.netherite");
+                case DRAGON_HEAD -> winMoney = bet * configuration.getInt("casino.diagonal.dragonHead");
+                case PLAYER_HEAD -> winMoney = bet * configuration.getInt("casino.diagonal.head");
+            }
+
+            if ((pattern.get(0) == pattern.get(4) && pattern.get(0) == pattern.get(8)) && (pattern.get(2) == pattern.get(4) && pattern.get(2) == pattern.get(6)))
+                winMoney = winMoney * 2;
+        } else if ((pattern.get(3) == pattern.get(4)) && (pattern.get(3) == pattern.get(5))){
+            switch (pattern.get(4)) {
+                case BIRCH_WOOD -> winMoney = bet * configuration.getInt("casino.horizontal.middle.birchWood");
+                case APPLE -> winMoney = bet * configuration.getInt("casino.horizontal.middle.apple");
+                case BREAD -> winMoney = bet * configuration.getInt("casino.horizontal.middle.bread");
+                case IRON_INGOT -> winMoney = bet * configuration.getInt("casino.horizontal.middle.iron");
+                case GOLD_INGOT -> winMoney = bet * configuration.getInt("casino.horizontal.middle.gold");
+                case DIAMOND -> winMoney = bet * configuration.getInt("casino.horizontal.middle.diamond");
+                case NETHERITE_INGOT -> winMoney = bet * configuration.getInt("casino.horizontal.middle.netherite");
+                case DRAGON_HEAD -> winMoney = bet * configuration.getInt("casino.horizontal.middle.dragonHead");
+                case PLAYER_HEAD -> winMoney = bet * configuration.getInt("casino.horizontal.middle.head");
+            }
+        }
+
+
+        if (method == SlotListeners.StopMethod.ALL) {
+            winMoney = winMoney * 2;
+        }
+
+        System.out.print("The money is " + winMoney);
+
+        return winMoney;
     }
 
-    public void addSlotFinishListener(Runnable runnable) {
-        slotFinishListeners.add(runnable);
-    }
+    static class SlotListeners {
 
-    public void slotFinishTrigger() {
-        slotFinishListeners.forEach(Runnable::run);
-    }
+        enum StopMethod {
+            INDIVIDUAL, ALL
+        }
 
-    public void clearButtonPressListeners() {
-        buttonPressListeners.clear();
-    }
+        private final List<Consumer<SlotType>> buttonPressListeners = new ArrayList<>();
+        private final List<Consumer<StopMethod>> slotFinishListeners = new ArrayList<>();
 
-    public void clearSlotFinishListeners() {
-        slotFinishListeners.clear();
+        public void addButtonPressListener(Consumer<SlotType> press) {
+            buttonPressListeners.add(press);
+        }
+
+        public void buttonPressTrigger(SlotType slotType) {
+            buttonPressListeners.forEach((listener) -> listener.accept(slotType));
+        }
+
+        public void addSlotFinishListener(Consumer<StopMethod> consumer) {
+            slotFinishListeners.add(consumer);
+        }
+
+        public void slotFinishTrigger(StopMethod stopMethod) {
+            slotFinishListeners.forEach((listener) -> listener.accept(stopMethod));
+        }
+
+        public void clearButtonPressListeners() {
+            buttonPressListeners.clear();
+        }
+
+        public void clearSlotFinishListeners() {
+            slotFinishListeners.clear();
+        }
     }
 }
 

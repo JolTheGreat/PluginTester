@@ -10,13 +10,13 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class CasinoContainer {
-    private static final ItemStack wood = new ItemStack(Material.BIRCH_WOOD);
-    private static final ItemStack netherite = new ItemStack(Material.NETHERITE_INGOT);
+    private static final ItemStack birchWood = new ItemStack(Material.BIRCH_WOOD);
     private static final ItemStack apple = new ItemStack(Material.APPLE);
     private static final ItemStack bread = new ItemStack(Material.BREAD);
-    private static final ItemStack diamond = new ItemStack(Material.DIAMOND);
     private static final ItemStack iron = new ItemStack(Material.IRON_INGOT);
     private static final ItemStack gold = new ItemStack(Material.GOLD_INGOT);
+    private static final ItemStack diamond = new ItemStack(Material.DIAMOND);
+    private static final ItemStack netherite = new ItemStack(Material.NETHERITE_INGOT);
     private static final ItemStack dragonHead = new ItemStack(Material.DRAGON_HEAD);
     private static final ItemStack head = new ItemStack(Material.PLAYER_HEAD);
 
@@ -25,7 +25,7 @@ public class CasinoContainer {
         assert meta != null;
         meta.setOwningPlayer(Bukkit.getOfflinePlayer("inutanuking"));
         head.setItemMeta(meta);
-        ItemStack[] stacks = {wood, netherite, apple, bread, diamond, iron, gold, dragonHead, head};
+        ItemStack[] stacks = {birchWood, apple, bread, iron, gold, diamond, netherite, dragonHead, head};
         return Arrays.stream(stacks).toList();
     }
 

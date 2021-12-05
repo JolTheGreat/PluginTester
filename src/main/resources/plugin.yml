@@ -10,3 +10,4 @@ commands:
     description: Opens GUI
     usage: /<command>
     aliases: [g]
+
