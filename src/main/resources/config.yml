@@ -24,14 +24,14 @@ casino:
       head: 1.7
     else:
       birchWood: 1.05
-        apple: 1.07
-        bread: 1.09
-        iron: 1.25
-        gold: 1.30
-        diamond: 1.35
-        netherite: 1.45
-        dragonHead: 1.55
-        head: 1.65
+      apple: 1.07
+      bread: 1.09
+      iron: 1.25
+      gold: 1.30
+      diamond: 1.35
+      netherite: 1.45
+      dragonHead: 1.55
+      head: 1.65
 
 
 

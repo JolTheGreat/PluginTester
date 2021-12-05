@@ -7,6 +7,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -75,7 +76,7 @@ public class Listener implements org.bukkit.event.Listener {
                         inventory.setItem(19, inventory.getItem(10));
                         inventory.setItem(10, newSlot);
                         System.out.println("Cycle1");
-                    }, 0, 2));
+                    }, 0, 20));
 
                     tasks.add(Bukkit.getScheduler().runTaskTimer(PluginTester.INSTANCE, () -> {
                         ItemStack newSlot = CasinoContainer.getRandom();
@@ -83,14 +84,14 @@ public class Listener implements org.bukkit.event.Listener {
                         inventory.setItem(20, inventory.getItem(11));
                         inventory.setItem(11, newSlot);
                         System.out.println("Cycle2");
-                    }, 0, 2));
+                    }, 0, 20));
                     tasks.add(Bukkit.getScheduler().runTaskTimer(PluginTester.INSTANCE, () -> {
                         ItemStack newSlot = CasinoContainer.getRandom();
                         inventory.setItem(30, inventory.getItem(21));
                         inventory.setItem(21, inventory.getItem(12));
                         inventory.setItem(12, newSlot);
                         System.out.println("Cycle3");
-                    }, 0, 2));
+                    }, 0, 20));
 
                     final ItemStack stopAllButton = new ItemStack(Material.RED_STAINED_GLASS_PANE);
                     final ItemMeta stopAllButtonMeta = stopAllButton.getItemMeta();
@@ -154,11 +155,11 @@ public class Listener implements org.bukkit.event.Listener {
                     player.openInventory(inventory);
 
                     listeners.addSlotFinishListener((stopMethod) -> {
-                        System.out.println("All stopped");
-                        lockStart = true;
-                        //10,11,12
-                        List<Material> pattern = getPattern();
-
+                        getPattern().forEach(System.out::println);
+                        System.out.println("The bet is" + bet);
+                        ItemStack prize = new ItemStack(Material.MOJANG_BANNER_PATTERN);
+                        prize.setAmount((int) Math.round(getWinMoney(getPattern(), stopMethod, bet)));
+                        player.getInventory().addItem(prize);
                     });
 
                     listeners.addButtonPressListener((slotType) -> {
@@ -219,13 +220,13 @@ public class Listener implements org.bukkit.event.Listener {
     }
 
     public static List<Material> getPattern() {
-        return Arrays.asList(Objects.requireNonNull(inventory.getItem(10)).getType(),
+        return Arrays.asList(Objects.requireNonNull(
+                Objects.requireNonNull(inventory.getItem(10)).getType()),
                 Objects.requireNonNull(inventory.getItem(11)).getType(),
                 Objects.requireNonNull(inventory.getItem(12)).getType(),
                 Objects.requireNonNull(inventory.getItem(19)).getType(),
                 Objects.requireNonNull(inventory.getItem(20)).getType(),
                 Objects.requireNonNull(inventory.getItem(21)).getType(),
-                Objects.requireNonNull(inventory.getItem(22)).getType(),
                 Objects.requireNonNull(inventory.getItem(28)).getType(),
                 Objects.requireNonNull(inventory.getItem(29)).getType(),
                 Objects.requireNonNull(inventory.getItem(30)).getType()
@@ -235,32 +236,37 @@ public class Listener implements org.bukkit.event.Listener {
     public static double getWinMoney(List<Material> pattern, SlotListeners.StopMethod method, int bet) {
         double winMoney = bet;
         final FileConfiguration configuration = PluginTester.INSTANCE.getConfig();
-        if ((pattern.get(0) == pattern.get(4) && pattern.get(0) == pattern.get(8)) || (pattern.get(2) == pattern.get(4) && pattern.get(2) == pattern.get(6))) {
+        System.out.println("Diagonal " +
+                "\n" + pattern.get(0) + pattern.get(4) + pattern.get(8));
+        if ((pattern.get(0) == pattern.get(4) && pattern.get(0) == pattern.get(8))) {
+
             switch (pattern.get(4)) {
-                case BIRCH_WOOD -> winMoney = bet * configuration.getInt("casino.diagonal.birchWood");
-                case APPLE -> winMoney = bet * configuration.getInt("casino.diagonal.apple");
-                case BREAD -> winMoney = bet * configuration.getInt("casino.diagonal.bread");
-                case IRON_INGOT -> winMoney = bet * configuration.getInt("casino.diagonal.iron");
-                case GOLD_INGOT -> winMoney = bet * configuration.getInt("casino.diagonal.gold");
-                case DIAMOND -> winMoney = bet * configuration.getInt("casino.diagonal.diamond");
-                case NETHERITE_INGOT -> winMoney = bet * configuration.getInt("casino.diagonal.netherite");
-                case DRAGON_HEAD -> winMoney = bet * configuration.getInt("casino.diagonal.dragonHead");
-                case PLAYER_HEAD -> winMoney = bet * configuration.getInt("casino.diagonal.head");
+                case BIRCH_WOOD -> winMoney = bet * configuration.getDouble("casino.diagonal.birchWood");
+                case APPLE -> winMoney = bet * configuration.getDouble("casino.diagonal.apple");
+                case BREAD -> winMoney = bet * configuration.getDouble("casino.diagonal.bread");
+                case IRON_INGOT -> winMoney = bet * configuration.getDouble("casino.diagonal.iron");
+                case GOLD_INGOT -> winMoney = bet * configuration.getDouble("casino.diagonal.gold");
+                case DIAMOND -> winMoney = bet * configuration.getDouble("casino.diagonal.diamond");
+                case NETHERITE_INGOT -> winMoney = bet * configuration.getDouble("casino.diagonal.netherite");
+                case DRAGON_HEAD -> winMoney = bet * configuration.getDouble("casino.diagonal.dragonHead");
+                case PLAYER_HEAD -> winMoney = bet * configuration.getDouble("casino.diagonal.head");
             }
 
-            if ((pattern.get(0) == pattern.get(4) && pattern.get(0) == pattern.get(8)) && (pattern.get(2) == pattern.get(4) && pattern.get(2) == pattern.get(6)))
+            if ((pattern.get(0) == pattern.get(4) && pattern.get(0) == pattern.get(8)) && (pattern.get(2) == pattern.get(4) && pattern.get(2) == pattern.get(6))) {
                 winMoney = winMoney * 2;
-        } else if ((pattern.get(3) == pattern.get(4)) && (pattern.get(3) == pattern.get(5))){
+            }
+        } else if ((pattern.get(3) == pattern.get(4)) && (pattern.get(3) == pattern.get(5))) {
+            System.out.println("Horizontal: " + pattern.get(3) + pattern.get(4) + pattern.get(5));
             switch (pattern.get(4)) {
-                case BIRCH_WOOD -> winMoney = bet * configuration.getInt("casino.horizontal.middle.birchWood");
-                case APPLE -> winMoney = bet * configuration.getInt("casino.horizontal.middle.apple");
-                case BREAD -> winMoney = bet * configuration.getInt("casino.horizontal.middle.bread");
-                case IRON_INGOT -> winMoney = bet * configuration.getInt("casino.horizontal.middle.iron");
-                case GOLD_INGOT -> winMoney = bet * configuration.getInt("casino.horizontal.middle.gold");
-                case DIAMOND -> winMoney = bet * configuration.getInt("casino.horizontal.middle.diamond");
-                case NETHERITE_INGOT -> winMoney = bet * configuration.getInt("casino.horizontal.middle.netherite");
-                case DRAGON_HEAD -> winMoney = bet * configuration.getInt("casino.horizontal.middle.dragonHead");
-                case PLAYER_HEAD -> winMoney = bet * configuration.getInt("casino.horizontal.middle.head");
+                case BIRCH_WOOD -> winMoney = bet * configuration.getDouble("casino.horizontal.middle.birchWood");
+                case APPLE -> winMoney = bet * configuration.getDouble("casino.horizontal.middle.apple");
+                case BREAD -> winMoney = bet * configuration.getDouble("casino.horizontal.middle.bread");
+                case IRON_INGOT -> winMoney = bet * configuration.getDouble("casino.horizontal.middle.iron");
+                case GOLD_INGOT -> winMoney = bet * configuration.getDouble("casino.horizontal.middle.gold");
+                case DIAMOND -> winMoney = bet * configuration.getDouble("casino.horizontal.middle.diamond");
+                case NETHERITE_INGOT -> winMoney = bet * configuration.getDouble("casino.horizontal.middle.netherite");
+                case DRAGON_HEAD -> winMoney = bet * configuration.getDouble("casino.horizontal.middle.dragonHead");
+                case PLAYER_HEAD -> winMoney = bet * configuration.getDouble("casino.horizontal.middle.head");
             }
         }
 
