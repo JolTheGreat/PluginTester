@@ -1,6 +1,7 @@
 package com.github.jolthegreat.plugintester;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -21,7 +22,7 @@ public class CommandExecutor implements org.bukkit.command.CommandExecutor, TabC
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         Player player = (Player) sender;
-        Inventory inventory = Bukkit.createInventory(player, 9, "Test");
+        Inventory inventory = Bukkit.createInventory(player, 9, ChatColor.GOLD + "Slot Machine");
         ItemStack gold = new ItemStack(Material.GOLD_INGOT);
         ItemStack cancel = new ItemStack(Material.BARRIER);
         ItemMeta goldMeta = gold.getItemMeta();
