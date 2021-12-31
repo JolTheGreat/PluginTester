@@ -40,10 +40,8 @@ public class SlotMachine implements Listener {
      * @param player スロットのguiを表示させたいプレイヤー
      */
     public static void start(Player player) {
-        SlotUtil.isSlotStarted = true;
         new AnvilGUI.Builder()
                 .title("賭ける金額を入力してください。")
-                .onClose(p -> System.out.println("Cancelled"))
                 .onComplete(slotMechanic())
                 .plugin(PluginTester.INSTANCE)
                 .itemLeft(new ItemStack(Material.PAPER))
@@ -55,7 +53,6 @@ public class SlotMachine implements Listener {
      */
     public static BiFunction<Player, String, AnvilGUI.Response> slotMechanic() {
         return (player, s) -> {
-            listeners.clearButtonPressListeners();
             listeners.clearSlotFinishListeners();
             tasks.clear();
             //数字かどうか確認
@@ -100,20 +97,9 @@ public class SlotMachine implements Listener {
                         /*
                          * @todo prize変数にあるだけプレイヤーにお金を口座に直接入金するコードを書く
                          */
+                        System.out.println(prize);
                     });
 
-                    listeners.addButtonPressListener((slotType) -> {
-                        switch (slotType) {
-                            case ONE -> tasks.get(0).cancel();
-                            case TWO -> tasks.get(1).cancel();
-                            case THREE -> tasks.get(2).cancel();
-                            case ALL -> tasks.forEach(BukkitTask::cancel);
-                        }
-
-                        if (tasks.get(0).isCancelled() && tasks.get(1).isCancelled() && tasks.get(2).isCancelled()) {
-                            listeners.slotFinishTrigger(SlotUtil.SlotListeners.StopMethod.INDIVIDUAL);
-                        }
-                    });
                 } else {
                     throw new Error("スロット内のアイテムは９個でなければいけません。SlotUtilを確認してください。");
                 }
@@ -237,7 +223,7 @@ public class SlotMachine implements Listener {
             winMoney = winMoney * 2;
         }
 
-        return winMoney;
+        return bet == winMoney ? 0 : winMoney;
     }
 
     /**
@@ -247,85 +233,66 @@ public class SlotMachine implements Listener {
      */
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
+        System.out.println(event.getView().getTitle() + "Closed");
         if (event.getView().getTitle().equalsIgnoreCase(ChatColor.GOLD + "Slot Machine") && SlotUtil.isSlotStarted) {
             SlotUtil.isSlotStarted = false;
-            listeners.buttonPressTrigger(SlotUtil.SlotListeners.SlotType.ALL);
+            tasks.forEach(BukkitTask::cancel);
         }
     }
 
     @EventHandler
     public void inventoryClick(InventoryClickEvent event) {
-        ItemStack eventStack = event.getCurrentItem();
+        ItemStack itemStack = event.getCurrentItem();
         System.out.println(event.getView().getTitle());
         System.out.println(SlotUtil.isSlotStarted);
-        if (event.getView().getTitle().equalsIgnoreCase(ChatColor.GOLD + "Slot Machine") && SlotUtil.isSlotStarted) {
-            switch (Objects.requireNonNull(eventStack).getType()) {
-                case GOLD_INGOT -> {
-                    System.out.println("Gold");
-                    start((Player) event.getWhoClicked());
-                }
-                case WARPED_BUTTON -> {
-                    final String displayName = Objects.requireNonNull(Objects.requireNonNull(event.getCurrentItem()).getItemMeta()).getDisplayName();
-                    if (displayName.contains("番目のスロットを止める")) {
-                        listeners.buttonPressTrigger(intToSlotType(Integer.parseInt(displayName.split("番")[0].replace((CharSequence) ChatColor.RED, ""))));
-                    }
-                }
-                case GREEN_STAINED_GLASS_PANE -> {
-                    tasks.add(Bukkit.getScheduler().runTaskTimer(PluginTester.INSTANCE, () -> {
-                        ItemStack newSlot = SlotUtil.getRandom();
-                        inventory.setItem(28, inventory.getItem(19));
-                        inventory.setItem(19, inventory.getItem(10));
-                        inventory.setItem(10, newSlot);
-                    }, 0, 20));
-
-                    tasks.add(Bukkit.getScheduler().runTaskTimer(PluginTester.INSTANCE, () -> {
-                        ItemStack newSlot = SlotUtil.getRandom();
-                        inventory.setItem(29, inventory.getItem(20));
-                        inventory.setItem(20, inventory.getItem(11));
-                        inventory.setItem(11, newSlot);
-                    }, 0, 20));
-                    tasks.add(Bukkit.getScheduler().runTaskTimer(PluginTester.INSTANCE, () -> {
-                        ItemStack newSlot = SlotUtil.getRandom();
-                        inventory.setItem(30, inventory.getItem(21));
-                        inventory.setItem(21, inventory.getItem(12));
-                        inventory.setItem(12, newSlot);
-                    }, 0, 20));
-
-                    final ItemStack stopAllButton = new ItemStack(Material.RED_STAINED_GLASS_PANE);
-                    final ItemMeta stopAllButtonMeta = stopAllButton.getItemMeta();
-                    assert stopAllButtonMeta != null;
-                    stopAllButtonMeta.setDisplayName(ChatColor.RED + "Stop");
-                    stopAllButton.setItemMeta(stopAllButtonMeta);
-                    inventory.setItem(24, stopAllButton);
-                }
-                case RED_STAINED_GLASS_PANE -> {
-                    tasks.forEach(BukkitTask::cancel);
-                    listeners.slotFinishTrigger(SlotUtil.SlotListeners.StopMethod.ALL);
-                    inventory.remove(Material.RED_STAINED_GLASS_PANE);
+        switch (Objects.requireNonNull(itemStack).getType()) {
+            case WARPED_BUTTON -> {
+                final String displayName = Objects.requireNonNull(Objects.requireNonNull(event.getCurrentItem()).getItemMeta()).getDisplayName();
+                int type = Integer.parseInt(displayName.split("番")[0].replace("§c", ""));
+                System.out.println(type);
+                tasks.get(type-1).cancel();
+                inventory.clear(type+45);
+                inventory.clear(33);
+                if (tasks.get(0).isCancelled() && tasks.get(1).isCancelled() && tasks.get(2).isCancelled()) {
+                    System.out.println("All stopped");
+                    listeners.slotFinishTrigger(SlotUtil.SlotListeners.StopMethod.INDIVIDUAL);
                 }
             }
-            event.setCancelled(true);
-        } else {
-            System.out.println("Error");
-        }
+            case GREEN_STAINED_GLASS_PANE -> {
+                SlotUtil.isSlotStarted = true;
+                tasks.add(Bukkit.getScheduler().runTaskTimer(PluginTester.INSTANCE, () -> {
+                    ItemStack newSlot = SlotUtil.getRandom();
+                    inventory.setItem(28, inventory.getItem(19));
+                    inventory.setItem(19, inventory.getItem(10));
+                    inventory.setItem(10, newSlot);
+                }, 0, 20));
 
-    }
+                tasks.add(Bukkit.getScheduler().runTaskTimer(PluginTester.INSTANCE, () -> {
+                    ItemStack newSlot = SlotUtil.getRandom();
+                    inventory.setItem(29, inventory.getItem(20));
+                    inventory.setItem(20, inventory.getItem(11));
+                    inventory.setItem(11, newSlot);
+                }, 0, 20));
+                tasks.add(Bukkit.getScheduler().runTaskTimer(PluginTester.INSTANCE, () -> {
+                    ItemStack newSlot = SlotUtil.getRandom();
+                    inventory.setItem(30, inventory.getItem(21));
+                    inventory.setItem(21, inventory.getItem(12));
+                    inventory.setItem(12, newSlot);
+                }, 0, 20));
 
-    public SlotUtil.SlotListeners.SlotType intToSlotType(int i) {
-        switch (i) {
-            case 1 -> {
-                return SlotUtil.SlotListeners.SlotType.ONE;
+                final ItemStack stopAllButton = new ItemStack(Material.RED_STAINED_GLASS_PANE);
+                final ItemMeta stopAllButtonMeta = stopAllButton.getItemMeta();
+                assert stopAllButtonMeta != null;
+                stopAllButtonMeta.setDisplayName(ChatColor.RED + "Stop");
+                stopAllButton.setItemMeta(stopAllButtonMeta);
+                inventory.setItem(24, stopAllButton);
             }
-            case 2 -> {
-                return SlotUtil.SlotListeners.SlotType.TWO;
-            }
-            case 3 -> {
-                return SlotUtil.SlotListeners.SlotType.THREE;
-            }
-            default -> {
-                return SlotUtil.SlotListeners.SlotType.ALL;
+            case RED_STAINED_GLASS_PANE -> {
+                tasks.forEach(BukkitTask::cancel);
+                listeners.slotFinishTrigger(SlotUtil.SlotListeners.StopMethod.ALL);
+                inventory.remove(Material.RED_STAINED_GLASS_PANE);
             }
         }
+        event.setCancelled(true);
     }
-
 }

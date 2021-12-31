@@ -21,20 +21,8 @@ public class CommandExecutor implements org.bukkit.command.CommandExecutor, TabC
     @Nonnull
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        Player player = (Player) sender;
-        Inventory inventory = Bukkit.createInventory(player, 9, ChatColor.GOLD + "Slot Machine");
-        ItemStack gold = new ItemStack(Material.GOLD_INGOT);
-        ItemStack cancel = new ItemStack(Material.BARRIER);
-        ItemMeta goldMeta = gold.getItemMeta();
-        assert goldMeta != null;
-        goldMeta.setDisplayName("Casino");
-        goldMeta.addEnchant(Enchantment.LUCK, 1, true);
-        goldMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-        gold.setItemMeta(goldMeta);
-        ItemStack[] stacks = {gold, cancel};
-        inventory.setContents(stacks);
-        player.openInventory(inventory);
-        return false;
+        SlotMachine.start((Player) sender);
+        return true;
     }
 
 
