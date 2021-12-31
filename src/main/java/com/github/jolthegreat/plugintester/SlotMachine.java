@@ -247,7 +247,7 @@ public class SlotMachine implements Listener {
      */
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
-        if (event.getView().getTitle().equalsIgnoreCase(ChatColor.GOLD + "Slot Machine")) {
+        if (event.getView().getTitle().equalsIgnoreCase(ChatColor.GOLD + "Slot Machine") && SlotUtil.isSlotStarted) {
             SlotUtil.isSlotStarted = false;
             listeners.buttonPressTrigger(SlotUtil.SlotListeners.SlotType.ALL);
         }
@@ -256,6 +256,8 @@ public class SlotMachine implements Listener {
     @EventHandler
     public void inventoryClick(InventoryClickEvent event) {
         ItemStack eventStack = event.getCurrentItem();
+        System.out.println(event.getView().getTitle());
+        System.out.println(SlotUtil.isSlotStarted);
         if (event.getView().getTitle().equalsIgnoreCase(ChatColor.GOLD + "Slot Machine") && SlotUtil.isSlotStarted) {
             switch (Objects.requireNonNull(eventStack).getType()) {
                 case GOLD_INGOT -> {
@@ -265,7 +267,7 @@ public class SlotMachine implements Listener {
                 case WARPED_BUTTON -> {
                     final String displayName = Objects.requireNonNull(Objects.requireNonNull(event.getCurrentItem()).getItemMeta()).getDisplayName();
                     if (displayName.contains("番目のスロットを止める")) {
-                        listeners.buttonPressTrigger(intToSlotType(Integer.parseInt(displayName.split("番")[0])));
+                        listeners.buttonPressTrigger(intToSlotType(Integer.parseInt(displayName.split("番")[0].replace((CharSequence) ChatColor.RED, ""))));
                     }
                 }
                 case GREEN_STAINED_GLASS_PANE -> {
