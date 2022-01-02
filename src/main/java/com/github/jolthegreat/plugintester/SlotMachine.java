@@ -245,52 +245,55 @@ public class SlotMachine implements Listener {
         ItemStack itemStack = event.getCurrentItem();
         System.out.println(event.getView().getTitle());
         System.out.println(SlotUtil.isSlotStarted);
-        switch (Objects.requireNonNull(itemStack).getType()) {
-            case WARPED_BUTTON -> {
-                final String displayName = Objects.requireNonNull(Objects.requireNonNull(event.getCurrentItem()).getItemMeta()).getDisplayName();
-                int type = Integer.parseInt(displayName.split("番")[0].replace("§c", ""));
-                System.out.println(type);
-                tasks.get(type-1).cancel();
-                inventory.clear(type+45);
-                inventory.clear(33);
-                if (tasks.get(0).isCancelled() && tasks.get(1).isCancelled() && tasks.get(2).isCancelled()) {
-                    System.out.println("All stopped");
-                    listeners.slotFinishTrigger(SlotUtil.SlotListeners.StopMethod.INDIVIDUAL);
+
+        if (itemStack != null) {
+            switch (itemStack.getType()) {
+                case WARPED_BUTTON -> {
+                    final String displayName = Objects.requireNonNull(Objects.requireNonNull(event.getCurrentItem()).getItemMeta()).getDisplayName();
+                    int type = Integer.parseInt(displayName.split("番")[0].replace("§c", ""));
+                    System.out.println(type);
+                    tasks.get(type-1).cancel();
+                    inventory.clear(type+45);
+                    inventory.clear(33);
+                    if (tasks.get(0).isCancelled() && tasks.get(1).isCancelled() && tasks.get(2).isCancelled()) {
+                        System.out.println("All stopped");
+                        listeners.slotFinishTrigger(SlotUtil.SlotListeners.StopMethod.INDIVIDUAL);
+                    }
                 }
-            }
-            case GREEN_STAINED_GLASS_PANE -> {
-                SlotUtil.isSlotStarted = true;
-                tasks.add(Bukkit.getScheduler().runTaskTimer(PluginTester.INSTANCE, () -> {
-                    ItemStack newSlot = SlotUtil.getRandom();
-                    inventory.setItem(28, inventory.getItem(19));
-                    inventory.setItem(19, inventory.getItem(10));
-                    inventory.setItem(10, newSlot);
-                }, 0, 20));
+                case GREEN_STAINED_GLASS_PANE -> {
+                    SlotUtil.isSlotStarted = true;
+                    tasks.add(Bukkit.getScheduler().runTaskTimer(PluginTester.INSTANCE, () -> {
+                        ItemStack newSlot = SlotUtil.getRandom();
+                        inventory.setItem(28, inventory.getItem(19));
+                        inventory.setItem(19, inventory.getItem(10));
+                        inventory.setItem(10, newSlot);
+                    }, 0, 20));
 
-                tasks.add(Bukkit.getScheduler().runTaskTimer(PluginTester.INSTANCE, () -> {
-                    ItemStack newSlot = SlotUtil.getRandom();
-                    inventory.setItem(29, inventory.getItem(20));
-                    inventory.setItem(20, inventory.getItem(11));
-                    inventory.setItem(11, newSlot);
-                }, 0, 20));
-                tasks.add(Bukkit.getScheduler().runTaskTimer(PluginTester.INSTANCE, () -> {
-                    ItemStack newSlot = SlotUtil.getRandom();
-                    inventory.setItem(30, inventory.getItem(21));
-                    inventory.setItem(21, inventory.getItem(12));
-                    inventory.setItem(12, newSlot);
-                }, 0, 20));
+                    tasks.add(Bukkit.getScheduler().runTaskTimer(PluginTester.INSTANCE, () -> {
+                        ItemStack newSlot = SlotUtil.getRandom();
+                        inventory.setItem(29, inventory.getItem(20));
+                        inventory.setItem(20, inventory.getItem(11));
+                        inventory.setItem(11, newSlot);
+                    }, 0, 20));
+                    tasks.add(Bukkit.getScheduler().runTaskTimer(PluginTester.INSTANCE, () -> {
+                        ItemStack newSlot = SlotUtil.getRandom();
+                        inventory.setItem(30, inventory.getItem(21));
+                        inventory.setItem(21, inventory.getItem(12));
+                        inventory.setItem(12, newSlot);
+                    }, 0, 20));
 
-                final ItemStack stopAllButton = new ItemStack(Material.RED_STAINED_GLASS_PANE);
-                final ItemMeta stopAllButtonMeta = stopAllButton.getItemMeta();
-                assert stopAllButtonMeta != null;
-                stopAllButtonMeta.setDisplayName(ChatColor.RED + "Stop");
-                stopAllButton.setItemMeta(stopAllButtonMeta);
-                inventory.setItem(24, stopAllButton);
-            }
-            case RED_STAINED_GLASS_PANE -> {
-                tasks.forEach(BukkitTask::cancel);
-                listeners.slotFinishTrigger(SlotUtil.SlotListeners.StopMethod.ALL);
-                inventory.remove(Material.RED_STAINED_GLASS_PANE);
+                    final ItemStack stopAllButton = new ItemStack(Material.RED_STAINED_GLASS_PANE);
+                    final ItemMeta stopAllButtonMeta = stopAllButton.getItemMeta();
+                    assert stopAllButtonMeta != null;
+                    stopAllButtonMeta.setDisplayName(ChatColor.RED + "Stop");
+                    stopAllButton.setItemMeta(stopAllButtonMeta);
+                    inventory.setItem(24, stopAllButton);
+                }
+                case RED_STAINED_GLASS_PANE -> {
+                    tasks.forEach(BukkitTask::cancel);
+                    listeners.slotFinishTrigger(SlotUtil.SlotListeners.StopMethod.ALL);
+                    inventory.remove(Material.RED_STAINED_GLASS_PANE);
+                }
             }
         }
         event.setCancelled(true);
