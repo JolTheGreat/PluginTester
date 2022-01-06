@@ -99,5 +99,15 @@ public class SlotUtil {
         public enum Patterns {
             DIAGONAL, X, MIDDLE_HORIZONTAL, ELSE_HORIZONTAL, ALL
         }
+
+        @Override
+        public String toString() {
+            return "SlotResult{" +
+                    "prize=" + prize +
+                    ", material=" + material +
+                    ", patterns=" + patterns +
+                    ", stopMethod=" + stopMethod +
+                    '}';
+        }
     }
 }

@@ -39,7 +39,7 @@ public class SlotMachine implements Listener {
                     .onComplete(slotMechanic())
                     .itemLeft(new ItemStack(Material.PAPER))
                     .plugin(PluginTester.INSTANCE)
-                    .text("半角数字で!!!")
+                    .text("半角数字で!!!: You have 13")
                     .open(player);
         }
     }
@@ -58,10 +58,10 @@ public class SlotMachine implements Listener {
          */
         SlotUtil.SlotResult slotResult = new SlotUtil.SlotResult();
         slotResult.setStopMethod(method);
-        double winMoney = bet;
+        double winMoney = 0;
         final FileConfiguration configuration = PluginTester.INSTANCE.getConfig();
 
-        if ((pattern.get(0) == pattern.get(4) && pattern.get(0) == pattern.get(8))) {
+        if ((pattern.get(0) == pattern.get(4) && pattern.get(0) == pattern.get(8)) || (pattern.get(2) == pattern.get(4) && pattern.get(2) == pattern.get(6))) {
             /*
             X00
             0X0
@@ -156,13 +156,13 @@ public class SlotMachine implements Listener {
 
 
         /*
-         * ３列同時に止められたならば、賞金は二倍
+         * ３列同時に止められたならば、賞金は4倍
          */
         if (method == SlotUtil.SlotListeners.StopMethod.ALL) {
-            winMoney = winMoney * 2;
+            winMoney = winMoney * 4;
         }
 
-        slotResult.setPrize(winMoney == bet ? 0 : (int) Math.round(winMoney));
+        slotResult.setPrize((int) Math.round(winMoney));
 
         //かける金額と賞金が同じなら賞金は０
         return slotResult;
@@ -215,6 +215,7 @@ public class SlotMachine implements Listener {
 
                         listeners.addSlotFinishListener((stopMethod) -> {
                             SlotUtil.SlotResult result = getWinMoney(getPattern(), stopMethod, bet);
+                            System.out.println(result);
                             if (result.getPrize() != 0) {
                                 String itemNameJapanese = "";
                                 String method = "";
@@ -248,8 +249,8 @@ public class SlotMachine implements Listener {
 
                                 ChatUtil.success(player, "のような模様で揃い、スロットが" + method + "止められたので、" + result.getPrize() + "円ゲットです！");
                             } else {
-                                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, SoundCategory.PLAYERS, 1F, 0.5F);
-                                ChatUtil.error(player, "残念！あなたは" + bet + "円負けました。");
+                                player.playSound(player.getLocation(), Sound.BLOCK_BELL_USE, SoundCategory.PLAYERS, 1F, 0.5F);
+                                ChatUtil.error(player, "残念！あなたは" + bet + "円負けました。ご臨終様です。");
                             }
 
                             /*
@@ -309,6 +310,7 @@ public class SlotMachine implements Listener {
             switch (Objects.requireNonNull(eventStack).getType()) {
                 case WARPED_BUTTON -> {
                     if (SlotUtil.isSlotStarted) {
+                        inventory.remove(Material.RED_STAINED_GLASS_PANE);
                         final String displayName = Objects.requireNonNull(Objects.requireNonNull(event.getCurrentItem()).getItemMeta()).getDisplayName();
                         int type = Integer.parseInt(displayName.split("番")[0].replace("§c", ""));
                         tasks.get(type - 1).cancel();
@@ -327,20 +329,20 @@ public class SlotMachine implements Listener {
                         inventory.setItem(28, inventory.getItem(19));
                         inventory.setItem(19, inventory.getItem(10));
                         inventory.setItem(10, newSlot);
-                    }, 0, 5));
+                    }, 0, 4));
 
                     tasks.add(Bukkit.getScheduler().runTaskTimer(PluginTester.INSTANCE, () -> {
                         ItemStack newSlot = SlotUtil.getRandom();
                         inventory.setItem(29, inventory.getItem(20));
                         inventory.setItem(20, inventory.getItem(11));
                         inventory.setItem(11, newSlot);
-                    }, 0, 5));
+                    }, 0, 4));
                     tasks.add(Bukkit.getScheduler().runTaskTimer(PluginTester.INSTANCE, () -> {
                         ItemStack newSlot = SlotUtil.getRandom();
                         inventory.setItem(30, inventory.getItem(21));
                         inventory.setItem(21, inventory.getItem(12));
                         inventory.setItem(12, newSlot);
-                    }, 0, 5));
+                    }, 0, 3));
 
                     final ItemStack stopAllButton = new ItemStack(Material.RED_STAINED_GLASS_PANE);
                     final ItemMeta stopAllButtonMeta = stopAllButton.getItemMeta();
@@ -356,6 +358,9 @@ public class SlotMachine implements Listener {
                         inventory.remove(Material.RED_STAINED_GLASS_PANE);
 
                         SlotUtil.isSlotStarted = false;
+                        inventory.clear(46);
+                        inventory.clear(47);
+                        inventory.clear(48);
                     }
                 }
             }
